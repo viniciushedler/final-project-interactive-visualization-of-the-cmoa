@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
 <body>
 Texto exemplo <br>
 <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -23,29 +26,37 @@ function drawTreemap(data) {
     const width = 960 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
        
-    // create a tooltip
-    let tooltip = d3.select("body")
-      .append("div")
+            // create a tooltip
+    var tooltip = d3.select("body")
+    .append("div")
+        .style("position", "absolute") // adicionar posição absoluta
+        .style("z-index", "10")
+        .style("visibility", "hidden")
         .attr("class", "tooltip");
+
     // tooltip events
     let mouseover = function(d) {
       tooltip
+          .style("visibility", "visible")  // tornar visível
           .style("opacity", 1)
       d3.select(this)
           .style("opacity", .5)
     };
-    let mousemove = function(event,d) {
-      f = d3.format(",")
-      tooltip
-      .html("Departament :" + `${(d.data.department)}` + "<br>" + "Number of artworks: " + f(function(d) { return d.value; }))
-        .style("top", event.pageY  + "px")
-        .style("left", event.pageX + 10 + "px")
+
+    let mousemove = function(d) {
+        tooltip
+            .html("Nacionalidade: " + d.data.nationality + 
+            "<br>Departamento: " + d.data.department + 
+            "<br><img src='" + d.data.img_url + "' />")
+            .style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");  // ajustar posição com base no mouse
     };
 
     let mouseleave = function(d) {
-      tooltip
+        tooltip
+        .style("visibility", "hidden") // tornar invisível
         .style("opacity", 0)
-      d3.select(this)
+
+        d3.select(this)
         .style("stroke", "none")
         .style("opacity", 1)
     };
@@ -73,8 +84,8 @@ function drawTreemap(data) {
         .enter().append("g")
             .attr("transform", function(d) { return "translate(" + d.x0 + "," + d.y0 + ")"; })
             .on("mouseover", mouseover)
-        .on("mousemove", mousemove)
-        .on("mouseleave", mouseleave);
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave);
 
     node.append("rect")
         .attr("id", function(d) { return d.data.id; })
@@ -90,9 +101,6 @@ function drawTreemap(data) {
     .attr("y", 0)
     .attr("width", function(d) { return d.x1 - d.x0; }) 
     .attr("height", function(d) { return d.y1 - d.y0; });
-
-  
-
 }
 </script>
 </body>
