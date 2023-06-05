@@ -5,7 +5,7 @@ Texto exemplo <br>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script>
 // Caminho para o arquivo CSV
-let url = 'cmoa_english_3.csv';
+let url = 'cmoa_english_4.csv';
 
 // Conversor de CSV para JSON
 d3.csv(url).then(function(data) {
@@ -13,35 +13,36 @@ d3.csv(url).then(function(data) {
         .key(function(d) { return d.nationality; })
         .key(function(d) { return d.department; })
         .entries(data);
+    
     drawTreemap(nest);
+    
 });
 
 function drawTreemap(data) {
     const margin = {top: 30, right: 20, bottom: 30, left: 20};
     const width = 960 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
-
-     // create a tooltip
-     const tooltip = d3.select("body")
+       
+    // create a tooltip
+    let tooltip = d3.select("body")
       .append("div")
         .attr("class", "tooltip");
-  
     // tooltip events
-    const mouseover = function(d) {
+    let mouseover = function(d) {
       tooltip
           .style("opacity", 1)
       d3.select(this)
           .style("opacity", .5)
     };
-    const mousemove = function(event,d) {
+    let mousemove = function(event,d) {
       f = d3.format(",")
       tooltip
-      .html("Departament :" + d.data )
+      .html("Departament :" + `${(d.data.department)}` + "<br>" + "Number of artworks: " + f(function(d) { return d.value; }))
         .style("top", event.pageY  + "px")
         .style("left", event.pageX + 10 + "px")
     };
-  
-    const mouseleave = function(d) {
+
+    let mouseleave = function(d) {
       tooltip
         .style("opacity", 0)
       d3.select(this)
@@ -49,13 +50,17 @@ function drawTreemap(data) {
         .style("opacity", 1)
     };
 
+    var color = d3.scaleOrdinal()
+    .domain(["Decorative Arts and Design", "Fine Arts", "Contemporary Art", "Heinz Architectural Center", "Photography"])
+    .range([ "#402D54", "#D18975", "#8FD175", "#8FD1D1", "#D18FD1"])
+
     let svg = d3.select("body").append("svg")
         .attr("width", width)
         .attr("height", height)
     
     let treemap = d3.treemap()
         .size([width, height])
-        .padding(1)
+        .padding(3)
         .round(true);
     let root = d3.hierarchy({values: data}, function(d) { return d.values; })
         .sum(function(d) { return d.value; })
@@ -75,20 +80,18 @@ function drawTreemap(data) {
         .attr("id", function(d) { return d.data.id; })
         .attr("width", function(d) { return d.x1 - d.x0; })
         .attr("height", function(d) { return d.y1- d.y0; })
-        .style("fill", "#0072BC")      
+        .style("stroke", "black")
+        .style("fill", function(d){ return color(d.data.department)} )     
 
         ;
-    console.log(node)
+    node.append("image")
+    .attr("xlink:href", function(d) { return d.data.img_url; })
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", function(d) { return d.x1 - d.x0; }) 
+    .attr("height", function(d) { return d.y1 - d.y0; });
 
-    // node.append("text")
-    //     .attr("class", "chart-title")
-    //     .attr("x", 0)
-    //     .attr("y", -(margin.top)/10)
-    //     .attr("text-anchor", "start")
-    //     .text("Treemap");
-    
   
-
 
 }
 </script>
