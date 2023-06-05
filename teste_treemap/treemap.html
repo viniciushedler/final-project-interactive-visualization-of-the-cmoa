@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+Texto exemplo <br>
+
+<select id="filtro-nacionalidade">
+    <option value="American" selected="selected">American</option>
+    <option value="Chinese">Chinese</option>
+</select>
+<br>
+<br>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+// Caminho para o arquivo CSV
+let url = 'cmoa_4_all.csv';
+
+// Conversor de CSV para JSON
+
+d3.csv(url).then(function(data) {
+    let selectedNationality = d3.select("#filtro-nacionalidade").node().value;
+    let filteredData = data.filter(d => d.nationality === selectedNationality);
+
+    let nest = d3.nest()
+        .key(function(d) { return d.nationality; })
+        .key(function(d) { return d.department; })
+        .entries(filteredData);
+    
+    drawTreemap(nest);
+
+    d3.select("#filtro-nacionalidade").on("change", function() {
+        selectedNationality = d3.select(this).node().value;
+        filteredData = data.filter(d => d.nationality === selectedNationality);
+        nest = d3.nest()
+            .key(function(d) { return d.nationality; })
+            .key(function(d) { return d.department; })
+            .entries(filteredData);
+
+        // Aqui estamos removendo o gráfico antigo antes de desenhar o novo.
+        d3.select("body").select("svg").remove();
+        drawTreemap(nest);
+    });
+});
+
+function drawTreemap(data) {
+    const margin = {top: 30, right: 20, bottom: 30, left: 20};
+    const width = 960 - margin.left - margin.right;
+    const height = 600 - margin.top - margin.bottom;
+       
+            // create a tooltip
+    var tooltip = d3.select("body")
+    .append("div")
+        .style("position", "absolute") // adicionar posição absoluta
+        .style("z-index", "10")
+        .style("visibility", "hidden")
+        .attr("class", "tooltip");
+
+    // tooltip events
+    let mouseover = function(d) {
+      tooltip
+          .style("visibility", "visible")  // tornar visível
+          .style("opacity", 1)
+      d3.select(this)
+          .style("opacity", .5)
+    };
+
+    let mousemove = function(d) {
+        tooltip
+            .html("Nacionalidade: " + d.data.nationality + 
+            "<br>Departamento: " + d.data.department + 
+            "<br><img src='" + d.data.img_url + "' />")
+            .style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");  // ajustar posição com base no mouse
+    };
+
+    let mouseleave = function(d) {
+        tooltip
+        .style("visibility", "hidden") // tornar invisível
+        .style("opacity", 0)
+
+        d3.select(this)
+        .style("stroke", "none")
+        .style("opacity", 1)
+    };
+
+    var color = d3.scaleOrdinal()
+    .domain(["Decorative Arts and Design", "Fine Arts", "Contemporary Art", "Heinz Architectural Center", "Photography"])
+    .range([ "#402D54", "#D18975", "#8FD175", "#8FD1D1", "#D18FD1"])
+
+    let svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+    
+    let treemap = d3.treemap()
+        .size([width, height])
+        .padding(3)
+        .round(true);
+    let root = d3.hierarchy({values: data}, function(d) { return d.values; })
+        .sum(function(d) { return d.value; })
+        .sort(function(a, b) { return b.value - a.value; });
+  
+    treemap(root);
+
+    let node = svg.selectAll(".node")
+        .data(root.leaves())
+        .enter().append("g")
+            .attr("transform", function(d) { return "translate(" + d.x0 + "," + d.y0 + ")"; })
+            .on("mouseover", mouseover)
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave);
+
+    node.append("rect")
+        .attr("id", function(d) { return d.data.id; })
+        .attr("width", function(d) { return d.x1 - d.x0; })
+        .attr("height", function(d) { return d.y1- d.y0; })
+        .style("stroke", "black")
+        .style("fill", function(d){ return color(d.data.department)} );
+
+    node.append("image")
+    .attr("xlink:href", function(d) { return d.data.img_url; })
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", function(d) { return d.x1 - d.x0; }) 
+    .attr("height", function(d) { return d.y1 - d.y0; });
+
+}
+</script>
+</body>
