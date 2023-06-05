@@ -5,20 +5,44 @@
 </head>
 <body>
 Texto exemplo <br>
+
+<select id="filtro-nacionalidade">
+    <option value="American" selected="selected">American</option>
+    <option value="Chinese">Chinese</option>
+</select>
+<br>
+<br>
+
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script>
 // Caminho para o arquivo CSV
-let url = 'cmoa_english_4.csv';
+let url = 'cmoa_4_all.csv';
 
 // Conversor de CSV para JSON
+
 d3.csv(url).then(function(data) {
+    let selectedNationality = d3.select("#filtro-nacionalidade").node().value;
+    let filteredData = data.filter(d => d.nationality === selectedNationality);
+
     let nest = d3.nest()
         .key(function(d) { return d.nationality; })
         .key(function(d) { return d.department; })
-        .entries(data);
+        .entries(filteredData);
     
     drawTreemap(nest);
-    
+
+    d3.select("#filtro-nacionalidade").on("change", function() {
+        selectedNationality = d3.select(this).node().value;
+        filteredData = data.filter(d => d.nationality === selectedNationality);
+        nest = d3.nest()
+            .key(function(d) { return d.nationality; })
+            .key(function(d) { return d.department; })
+            .entries(filteredData);
+
+        // Aqui estamos removendo o gráfico antigo antes de desenhar o novo.
+        d3.select("body").select("svg").remove();
+        drawTreemap(nest);
+    });
 });
 
 function drawTreemap(data) {
@@ -92,15 +116,15 @@ function drawTreemap(data) {
         .attr("width", function(d) { return d.x1 - d.x0; })
         .attr("height", function(d) { return d.y1- d.y0; })
         .style("stroke", "black")
-        .style("fill", function(d){ return color(d.data.department)} )     
+        .style("fill", function(d){ return color(d.data.department)} );
 
-        ;
     node.append("image")
     .attr("xlink:href", function(d) { return d.data.img_url; })
     .attr("x", 0)
     .attr("y", 0)
     .attr("width", function(d) { return d.x1 - d.x0; }) 
     .attr("height", function(d) { return d.y1 - d.y0; });
+
 }
 </script>
 </body>
